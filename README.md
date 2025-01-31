@@ -1,8 +1,57 @@
-# RedM-Auto-Panning
-This simple auto panner simulates space button presses.
 
-## How to Setup
-- Download Visual Studio Code
-- Go to 'File' and then click 'Open File'
-- It will prompt you to install a Java extension pack. Download it.
-- Scroll down to the bottom and click on the small 'Run' in the code above the main function.
+# RedM Auto Panning
+
+Hate having to press the enter button every so often while panning for gold in RedM?
+
+No problem! This simple Java program will let you afk pan gold until you can't anymore.
+## Features
+
+- Easy to use UI
+- Timings for each action shown
+- Randomized timings
+- - Wait time and panning time.
+## Installation
+
+Install the zip folder from [releases](https://github.com/DRAGEno01/RedM-Auto-Panning/releases). Make sure you install the latest version.
+
+From there, unzip the file and in a CMD (Command Prompt) window (in that directory), use the following code:
+
+```bash
+  java RedMPanner
+```
+
+This requires you to have Java installed.
+## License
+
+[CC BY-NC-ND](https://creativecommons.org/share-your-work/cclicenses/#:~:text=CC%20BY%2DNC%2DND,adaptations%20of%20the%20work%20are%20permitted.)
+
+Overview of the [CC BY-NC-ND] License:
+
+This license enables reusers to copy and distribute the material in any medium or format in unadapted form only, for noncommercial purposes only, and only so long as attribution is given to the creator.
+## FAQ
+
+#### Does this bypass anti-cheat?
+
+It does not attempt to bypass. There may be code for randomized timings, but no other active attempts.
+
+#### Does this inject into RedM?
+
+No, this just simulates the space button. If you really wanted to, you could use this to write a book with (not practical, but point still stands) this project.
+
+#### What if I get banned?
+
+We are no responsible for any action taken against you for using this auto panning script.
+## Support
+
+For support, feel free to open a issue in the project. We will take a look into the issue, and help you the best we can.
+## Acknowledgements
+
+ - Made by [DRAGEno01](https://github.com/DRAGEno01) [![DRAGEno01](https://img.shields.io/badge/Developer-Active-green)](https://github.com/DRAGEno01)
+ - Tested by [Jamie Knotts]() [![](https://img.shields.io/badge/Tester-Missing_Profile-blue)]()
+## Appendix
+
+This project is still being activly checked and developed.
+
+Thank you very much for veiwing this project.
+
+[![DRAGEno01's RedM Auto Panning](https://img.shields.io/badge/Project_Status-Actively_Panning_:]-green)](https://github.com/DRAGEno01/RedM-Auto-Panning/)
