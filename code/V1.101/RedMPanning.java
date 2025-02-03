@@ -632,7 +632,7 @@ public class RedMPanning extends JFrame {
     }
 
     private void downloadUpdate(String latestVersion) {
-        String updateUrl = String.format("https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/code/V%s/RedMPanning.jar", latestVersion);
+        String updateUrl = String.format("https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/code/V%s/RedMPanning.java", latestVersion);
         JDialog progressDialog = new JDialog(this, "Downloading Update", true);
         JProgressBar progressBar = new JProgressBar(0, 100);
         JLabel statusLabel = new JLabel("Downloading...", SwingConstants.CENTER);
@@ -656,23 +656,23 @@ public class RedMPanning extends JFrame {
                 File updateDir = new File("update");
                 updateDir.mkdirs();
                 
-                String newJarPath = "update/RedMPanning_new.jar";
+                String newFilePath = "RedMPanning.java";  // Save directly to current directory
                 URL url = new URL(updateUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 int fileSize = connection.getContentLength();
                 
-                try (InputStream in = new BufferedInputStream(connection.getInputStream());
-                     FileOutputStream out = new FileOutputStream(newJarPath)) {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                     FileWriter out = new FileWriter(newFilePath)) {  // Use FileWriter for text files
                     
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-                    long totalBytesRead = 0;
+                    char[] buffer = new char[1024];
+                    int charsRead;
+                    long totalCharsRead = 0;
                     
-                    while ((bytesRead = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                        totalBytesRead += bytesRead;
+                    while ((charsRead = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, charsRead);
+                        totalCharsRead += charsRead;
                         
-                        final int progress = (int) ((totalBytesRead * 100) / fileSize);
+                        final int progress = (int) ((totalCharsRead * 100) / fileSize);
                         SwingUtilities.invokeLater(() -> {
                             progressBar.setValue(progress);
                             progressBar.setString(progress + "%");
@@ -680,29 +680,15 @@ public class RedMPanning extends JFrame {
                     }
                 }
                 
-                // Create update script
-                createUpdateScript(newJarPath);
-                
                 SwingUtilities.invokeLater(() -> {
                     progressDialog.dispose();
                     JOptionPane.showMessageDialog(
                         this,
-                        "Update downloaded successfully!\nThe application will now restart.",
+                        "Update downloaded successfully!\nPlease recompile and restart the application.",
                         "Update Complete",
                         JOptionPane.INFORMATION_MESSAGE
                     );
-                    
-                    // Run update script and exit
-                    try {
-                        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-                            Runtime.getRuntime().exec("cmd /c start update.bat");
-                        } else {
-                            Runtime.getRuntime().exec("./update.sh");
-                        }
-                        System.exit(0);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    System.exit(0);
                 });
                 
             } catch (Exception e) {
@@ -722,32 +708,6 @@ public class RedMPanning extends JFrame {
         progressDialog.setVisible(true);
     }
 
-    private void createUpdateScript(String newJarPath) throws IOException {
-        String script;
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            script = "@echo off\n"
-                    + "timeout /t 1 /nobreak > nul\n"
-                    + "del /F /Q RedMPanning.jar\n"
-                    + "move /Y " + newJarPath + " RedMPanning.jar\n"
-                    + "start javaw -jar RedMPanning.jar\n"
-                    + "del /F /Q update.bat";
-            try (FileWriter fw = new FileWriter("update.bat")) {
-                fw.write(script);
-            }
-        } else {
-            script = "#!/bin/bash\n"
-                    + "sleep 1\n"
-                    + "rm -f RedMPanning.jar\n"
-                    + "mv " + newJarPath + " RedMPanning.jar\n"
-                    + "java -jar RedMPanning.jar &\n"
-                    + "rm -f update.sh";
-            try (FileWriter fw = new FileWriter("update.sh")) {
-                fw.write(script);
-            }
-            Runtime.getRuntime().exec("chmod +x update.sh");
-        }
-    }
-    
     // Make sure to clean up the timer when the application closes
     @Override
     public void dispose() {
