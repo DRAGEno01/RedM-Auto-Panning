@@ -27,7 +27,7 @@ import java.awt.geom.RoundRectangle2D;
 import javax.swing.BorderFactory;
 
 public class RedMPanning extends JFrame {
-    private static final String VERSION = "1.100";
+    private static final String VERSION = "1.101";
     private static final String VERSION_URL = "https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/version.txt";
     private JButton startButton;
     private JButton stopButton;
