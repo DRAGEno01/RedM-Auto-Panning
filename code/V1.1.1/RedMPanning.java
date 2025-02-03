@@ -9,6 +9,7 @@ import java.awt.Desktop;
 import javax.swing.Timer;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.net.HttpURLConnection;
@@ -17,6 +18,14 @@ import java.io.FileOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.FileWriter;
+import java.awt.AlphaComposite;
+import java.awt.GradientPaint;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import java.awt.geom.RoundRectangle2D;
+import javax.swing.BorderFactory;
 
 public class RedMPanning extends JFrame {
     private static final String VERSION = "1.1.0"; // Add your current version
@@ -733,6 +742,13 @@ public class RedMPanning extends JFrame {
     }
     
     public static void main(String[] args) {
+        try {
+            // Set system look and feel for better UI appearance
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
         SwingUtilities.invokeLater(() -> {
             RedMPanning app = new RedMPanning();
             app.setLocationRelativeTo(null);
