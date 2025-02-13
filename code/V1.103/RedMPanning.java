@@ -39,10 +39,6 @@ import org.jnativehook.keyboard.NativeKeyListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Optional;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinDef.HWND;
-import com.sun.jna.platform.win32.User32;
-import com.sun.jna.Native;
 
 public class RedMPanning extends JFrame {
     private static final String VERSION = "1.103";
@@ -1273,11 +1269,6 @@ public class RedMPanning extends JFrame {
     }
     
     private boolean isRedMRunning() {
-        // Check for window title
-        HWND window = User32.INSTANCE.FindWindow(null, REDM_WINDOW_TITLE);
-        if (window != null) return true;
-        
-        // Fallback to process check
         try {
             ProcessBuilder pb = new ProcessBuilder("tasklist.exe", "/FI", "IMAGENAME eq " + REDM_PROCESS_NAME);
             Process process = pb.start();
@@ -1291,7 +1282,6 @@ public class RedMPanning extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
         return false;
     }
     
