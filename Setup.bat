@@ -17,10 +17,8 @@ set /p VERSION=<"%INSTALL_DIR%\lib\version.txt"
 :: Download the main Java file
 curl -s "https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/main/code/V%VERSION%/RedMPanning.java" > "%INSTALL_DIR%\lib\src\RedMPanning.java"
 
-:: Download JNativeHook dependency
+:: Download all required dependencies
 curl -L "https://repo1.maven.org/maven2/com/1stleg/jnativehook/2.1.0/jnativehook-2.1.0.jar" > "%INSTALL_DIR%\lib\jnativehook-2.1.0.jar"
-
-:: Add to dependencies section
 curl -L "https://repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar" > "%INSTALL_DIR%\lib\jna-platform-5.13.0.jar"
 curl -L "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar" > "%INSTALL_DIR%\lib\jna-5.13.0.jar"
 
