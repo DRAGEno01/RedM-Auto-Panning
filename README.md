@@ -35,13 +35,17 @@ Overview of the [CC BY-NC-ND] License:
 This license enables reusers to copy and distribute the material in any medium or format in unadapted form only, for noncommercial purposes only, and only so long as attribution is given to the creator.
 ## FAQ
 
+#### How do I use this project?
+
+You can click the start and stop button on the project, or if you prefer, you can use the F6 key to start and stop the project.
+
 #### Does this bypass anti-cheat?
 
 It does not attempt to bypass. There may be code for randomized timings, but no other active attempts.
 
 #### Does this inject into RedM?
 
-No, this just simulates the space button. If you really wanted to, you could use this to write a book with (not practical, but point still stands) this project.
+No, this just simulates the space button and checks if there is a program running that matches the name of the RedM/RDR2 program. If you really wanted to, you could use this to write a book with (not practical, but point still stands) this project. The "detection" of the game is not a required part of the program.
 
 #### What if I get banned?
 
