@@ -19,6 +19,10 @@ From there, unzip the file and in a CMD (Command Prompt) window (in that directo
 ```bash
   java RedMPanner
 ```
+Alternate way:
+```bash
+  curl -s https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/main/install.sh | bash
+```
 
 This requires you to have Java installed.
 ## License
