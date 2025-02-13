@@ -63,4 +63,4 @@ This project is still being activly checked and developed.
 
 Thank you very much for veiwing this project.
 
-[![DRAGEno01's RedM Auto Panning](https://img.shields.io/badge/Project_Status-Actively_Panning_:]-green)](https://github.com/DRAGEno01/RedM-Auto-Panning/)
+[![DRAGEno01's RedM Auto Panning](https://img.shields.io/badge/Project_Status-Actively_Panning_:]-green)](https://github.com/DRAGEno01/RedM-Auto-Panning/) [![Current Release Version](https://img.shields.io/github/v/release/DRAGEno01/RedM-Auto-Panning)](https://github.com/DRAGEno01/RedM-Auto-Panning/)
