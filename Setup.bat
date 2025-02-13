@@ -19,8 +19,6 @@ curl -s "https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/main/code
 
 :: Download all required dependencies
 curl -L "https://repo1.maven.org/maven2/com/1stleg/jnativehook/2.1.0/jnativehook-2.1.0.jar" > "%INSTALL_DIR%\lib\jnativehook-2.1.0.jar"
-curl -L "https://repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar" > "%INSTALL_DIR%\lib\jna-platform-5.13.0.jar"
-curl -L "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar" > "%INSTALL_DIR%\lib\jna-5.13.0.jar"
 
 :: Create run.bat in main directory
 (
@@ -40,7 +38,7 @@ echo     exit /b 1
 echo ^)
 echo.
 echo :: Compile the code
-echo javac -cp "jnativehook-2.1.0.jar;jna-5.13.0.jar;jna-platform-5.13.0.jar;src" src/RedMPanning.java
+echo javac -cp "jnativehook-2.1.0.jar;src" src/RedMPanning.java
 echo if %%errorlevel%% neq 0 ^(
 echo     echo Compilation failed!
 echo     echo Press any key to exit...
@@ -49,7 +47,7 @@ echo     exit /b 1
 echo ^)
 echo.
 echo :: Run the program
-echo java -cp ".;jnativehook-2.1.0.jar;jna-5.13.0.jar;jna-platform-5.13.0.jar;src" RedMPanning
+echo java -cp ".;jnativehook-2.1.0.jar;src" RedMPanning
 echo.
 echo exit /b 0
 ) > "%INSTALL_DIR%\RedM Auto Panner.bat"
