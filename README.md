@@ -10,19 +10,20 @@ No problem! This simple Java program will let you afk pan gold until you can't a
 - Timings for each action shown
 - Randomized timings
 - - Wait time and panning time.
+
 ## Installation
 
-Install the zip folder from [releases](https://github.com/DRAGEno01/RedM-Auto-Panning/releases). Make sure you install the latest version.
+Install the Setup.bat file from releases to install the latest version. You will need to install the setup file if you are downloading from V1.103 and onwards.
 
-From there, unzip the file and in a CMD (Command Prompt) window (in that directory), use the following code:
+From there double click the Setup.bat file and check your Desktop folder for a new folder called "RedM Auto Panner". Inside that folder is another bat file that you can just double click and run the application.
 
-```bash
-  java RedMPanner
-```
-Alternate way:
+### Alternate Installation Method
+
+Run this in command prompt or powershell.
 ```bash
   curl -s https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/main/install.sh | bash
 ```
+    
 
 This requires you to have Java installed.
 ## License
