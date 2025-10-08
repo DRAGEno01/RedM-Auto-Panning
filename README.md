@@ -13,19 +13,11 @@ No problem! This simple Java program will let you afk pan gold until you can't a
 
 ## Installation
 
-Install the Setup.bat file from releases to install the latest version. You will need to install the setup file if you are downloading from V1.103 and onwards.
+Head over to [releases](https://github.com/DRAGEno01/RedM-Auto-Panning/releases) and install the latest version of the installer. It should be a .bat file. You will then need to select the Python install by pressing 0 when prompting which language version.
 
-From there double click the Setup.bat file and check your Desktop folder for a new folder called "RedM Auto Panner". Inside that folder is another bat file that you can just double click and run the application.
+Once you have done that, make sure Python is installed (WITH IT BEING ADDED TO THE PATH), and then head over to your Desktop (you may need to view it in C://Users/YOUR_USER_ID/Desktop) and open the nessasary folders until you find "Python" folder. In that folder there is a .bat file to start it all up. Then you are ready to go and pan away in RedM.
 
-### Alternate Installation Method
 
-Run this in command prompt or powershell.
-```bash
-  curl -s https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/main/install.sh | bash
-```
-    
-
-This requires you to have Java installed.
 ## License
 
 [CC BY-NC-ND](https://creativecommons.org/share-your-work/cclicenses/#:~:text=CC%20BY%2DNC%2DND,adaptations%20of%20the%20work%20are%20permitted.)
@@ -37,15 +29,21 @@ This license enables reusers to copy and distribute the material in any medium o
 
 #### How do I use this project?
 
-You can click the start and stop button on the project, or if you prefer, you can use the F6 key to start and stop the project.
+You can click the start and stop button on the project, or if you prefer, you can use the F6 key to start and F7 stop the project.
+
+#### Can I change the keybinds?
+
+You can change the start and stop keybinds in settings, and it will save between uses!
 
 #### Does this bypass anti-cheat?
 
-It does not attempt to bypass. There may be code for randomized timings, but no other active attempts.
+It does not attempt to bypass. There may be code for randomized timings, but no other active attempts. This will NEVER try to insert or inject scripts into the game. This script just mymics the keyboard.
 
 #### Does this inject into RedM?
 
 No, this just simulates the space button and checks if there is a program running that matches the name of the RedM/RDR2 program. If you really wanted to, you could use this to write a book with (not practical, but point still stands) this project. The "detection" of the game is not a required part of the program.
+
+(As of the Python release, the Python version does not activly check if there is a program called RedM open).
 
 #### What if I get banned?
 
@@ -63,4 +61,4 @@ This project is still being activly checked and developed.
 
 Thank you very much for veiwing this project.
 
-[![DRAGEno01's RedM Auto Panning](https://img.shields.io/badge/Project_Status-On_Pause_:%7C-yellow)](https://github.com/DRAGEno01/RedM-Auto-Panning/) [![Current Release Version](https://img.shields.io/github/v/release/DRAGEno01/RedM-Auto-Panning)](https://github.com/DRAGEno01/RedM-Auto-Panning/)
+[![DRAGEno01's RedM Auto Panning](https://img.shields.io/badge/Project_Status-Activly_Panning-green)](https://github.com/DRAGEno01/RedM-Auto-Panning/) [![Current Release Version](https://img.shields.io/github/v/release/DRAGEno01/RedM-Auto-Panning)](https://github.com/DRAGEno01/RedM-Auto-Panning/)
