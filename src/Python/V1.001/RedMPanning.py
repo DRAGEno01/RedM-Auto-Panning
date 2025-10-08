@@ -25,7 +25,8 @@ except ImportError:
 class RedMPanning:
     def __init__(self):
         self.VERSION = "1.001"
-        self.VERSION_URL = "https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/version.txt"
+        self.INFO_URL = "https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/src/Python/info.py"
+        self.PYTHON_SRC_URL = "https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/src/Python/"
         self.repo_url = "https://github.com/DRAGEno01/RedM-Auto-Panning/releases"
         
         # State variables
@@ -42,7 +43,7 @@ class RedMPanning:
         
         # Create main window
         self.root = tk.Tk()
-        self.root.title("DRAGEno01's RedM Auto Panning")
+        self.root.title("DRAGEno02's RedM Auto Panning")
         self.root.geometry("700x550")
         self.root.resizable(False, False)
         self.root.configure(bg='#1c2026')
@@ -61,6 +62,9 @@ class RedMPanning:
         
         # Check for updates
         self.check_version()
+        
+        # Check application integrity
+        self.check_integrity()
         
         # Start fade-in animation
         self.fade_in_animation()
@@ -307,17 +311,155 @@ class RedMPanning:
         """Check for application updates"""
         def check():
             try:
-                with urllib.request.urlopen(self.VERSION_URL, timeout=5) as response:
-                    latest_version = response.read().decode('utf-8').strip()
-                    
-                if latest_version != self.VERSION:
+                with urllib.request.urlopen(self.INFO_URL, timeout=5) as response:
+                    info_content = response.read().decode('utf-8').strip()
+                
+                # Parse the info.py content
+                supported = None
+                latest_version = None
+                
+                for line in info_content.split('\n'):
+                    line = line.strip()
+                    if line.startswith('supported'):
+                        supported = line.split('=')[1].strip()
+                    elif line.startswith('version'):
+                        latest_version = line.split('=')[1].strip()
+                
+                print(f"Remote info - Supported: {supported}, Version: {latest_version}")
+                print(f"Local version: {self.VERSION}")
+                
+                # Check if supported and version scenarios
+                if supported and supported.lower() == 'false':
+                    if latest_version and latest_version != self.VERSION:
+                        # Not supported AND different version - must update
+                        self.root.after(0, lambda: self.show_must_update_dialog(latest_version))
+                    else:
+                        # Not supported but same version - can continue with warning
+                        self.root.after(0, lambda: self.show_unsupported_warning_dialog())
+                    return
+                
+                # Check if version is different (and supported)
+                if latest_version and latest_version != self.VERSION:
                     self.root.after(0, lambda: self.show_update_dialog(latest_version))
+                    
             except Exception as e:
                 print(f"Version check failed: {e}")
                 # Show connection warning
                 self.root.after(0, self.show_connection_warning)
         
         threading.Thread(target=check, daemon=True).start()
+    
+    def check_integrity(self):
+        """Check application integrity to detect tampering"""
+        def integrity_check():
+            try:
+                # Extract author from GitHub URL
+                author = self.extract_author_from_url(self.repo_url)
+                if not author:
+                    return  # Skip check if can't extract author
+                
+                # Check if title contains the correct author
+                if author not in self.root.title():
+                    self.root.after(0, self.show_tampering_warning)
+                    return
+                
+                # Read the current file to check for tampering
+                try:
+                    with open(__file__, 'r', encoding='utf-8') as f:
+                        file_content = f.read()
+                    
+                    # Check if author appears in the code (more subtle)
+                    if author not in file_content:
+                        self.root.after(0, self.show_tampering_warning)
+                        return
+                        
+                except Exception as e:
+                    print(f"Error reading file for integrity check: {e}")
+                    self.root.after(0, self.show_tampering_warning)
+                    return
+                    
+            except Exception as e:
+                print(f"Integrity check failed: {e}")
+                self.root.after(0, self.show_tampering_warning)
+        
+        threading.Thread(target=integrity_check, daemon=True).start()
+    
+    def extract_author_from_url(self, url):
+        """Extract author name from GitHub URL"""
+        try:
+            # Parse GitHub URL to extract author
+            if 'github.com' in url:
+                parts = url.split('/')
+                for i, part in enumerate(parts):
+                    if part == 'github.com' and i + 1 < len(parts):
+                        return parts[i + 1]  # Return the username after github.com
+            return None
+        except Exception as e:
+            print(f"Error extracting author from URL: {e}")
+            return None
+    
+    def show_tampering_warning(self):
+        """Show tampering warning dialog"""
+        tampering_window = tk.Toplevel(self.root)
+        tampering_window.title("Security Warning")
+        tampering_window.geometry("600x500")
+        tampering_window.resizable(False, False)
+        tampering_window.configure(bg='#1c2026')
+        tampering_window.grab_set()
+        
+        # Center the dialog
+        tampering_window.transient(self.root)
+        tampering_window.geometry("+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50))
+        
+        # Content
+        content_frame = tk.Frame(tampering_window, bg='#1c2026')
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
+        
+        # Title
+        title_label = tk.Label(content_frame, text="Security Warning", 
+                              font=('Segoe UI', 20, 'bold'), 
+                              fg='#ff4444', bg='#1c2026')
+        title_label.pack(pady=(0, 25))
+        
+        # Message
+        message_text = """WARNING: This application appears to have been modified from the official version.
+
+The code has been changed from the official version. This could be a security risk.
+
+For your safety, please download a new secure copy from the official GitHub repository to ensure you have the authentic, unmodified version."""
+        
+        # Create a text widget for better text wrapping
+        text_widget = tk.Text(content_frame, 
+                             font=('Segoe UI', 12), 
+                             fg='#b0b0b0', bg='#1c2026',
+                             wrap=tk.WORD, 
+                             height=8, 
+                             width=60,
+                             relief=tk.FLAT, 
+                             bd=0,
+                             padx=10, 
+                             pady=10)
+        text_widget.pack(pady=(0, 25), fill=tk.BOTH, expand=True)
+        text_widget.insert(tk.END, message_text)
+        text_widget.config(state=tk.DISABLED)  # Make it read-only
+        
+        # Buttons
+        button_frame = tk.Frame(content_frame, bg='#1c2026')
+        button_frame.pack(fill=tk.X, pady=(10, 0))
+        
+        github_button = tk.Button(button_frame, text="Download Official Version", 
+                                 command=lambda: [webbrowser.open(self.repo_url), tampering_window.destroy()],
+                                 font=('Segoe UI', 12, 'bold'),
+                                 fg='white', bg='#28a745', relief=tk.FLAT, bd=0,
+                                 padx=20, pady=12, cursor='hand2')
+        github_button.pack(side=tk.LEFT, padx=(0, 15))
+        
+        exit_button = tk.Button(button_frame, text="Exit", 
+                               command=self.root.quit,
+                               font=('Segoe UI', 12, 'bold'),
+                               fg='white', bg='#dc3545', relief=tk.FLAT, bd=0,
+                               padx=20, pady=12, cursor='hand2')
+        exit_button.pack(side=tk.RIGHT)
     
     def show_update_dialog(self, latest_version):
         """Show update dialog"""
@@ -446,18 +588,221 @@ You can continue using the application, but updates may be available."""
                                  padx=25, pady=12, cursor='hand2')
         github_button.pack(side=tk.RIGHT)
     
+    def show_unsupported_warning_dialog(self):
+        """Show unsupported version warning (can continue)"""
+        warning_window = tk.Toplevel(self.root)
+        warning_window.title("Version Warning")
+        warning_window.geometry("550x450")
+        warning_window.resizable(False, False)
+        warning_window.configure(bg='#1c2026')
+        warning_window.grab_set()
+        
+        # Center the dialog
+        warning_window.transient(self.root)
+        warning_window.geometry("+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50))
+        
+        # Content
+        content_frame = tk.Frame(warning_window, bg='#1c2026')
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
+        
+        # Title
+        title_label = tk.Label(content_frame, text="Version Warning", 
+                              font=('Segoe UI', 18, 'bold'), 
+                              fg='#ffa500', bg='#1c2026')
+        title_label.pack(pady=(0, 25))
+        
+        # Message
+        message_text = f"""This version is no longer officially supported.
+
+Current version: {self.VERSION}
+
+You can still continue to use the current version, but it may never be updated again. We recommend switching to the Java version or downloading the latest Python version from GitHub for continued support and updates."""
+        
+        # Create a text widget for better text wrapping
+        text_widget = tk.Text(content_frame, 
+                             font=('Segoe UI', 12), 
+                             fg='#b0b0b0', bg='#1c2026',
+                             wrap=tk.WORD, 
+                             height=8, 
+                             width=60,
+                             relief=tk.FLAT, 
+                             bd=0,
+                             padx=10, 
+                             pady=10)
+        text_widget.pack(pady=(0, 25), fill=tk.BOTH, expand=True)
+        text_widget.insert(tk.END, message_text)
+        text_widget.config(state=tk.DISABLED)  # Make it read-only
+        
+        # Buttons
+        button_frame = tk.Frame(content_frame, bg='#1c2026')
+        button_frame.pack(fill=tk.X, pady=(10, 0))
+        
+        continue_button = tk.Button(button_frame, text="Continue Anyway", 
+                                   command=warning_window.destroy,
+                                   font=('Segoe UI', 12, 'bold'),
+                                   fg='white', bg='#6c757d', relief=tk.FLAT, bd=0,
+                                   padx=20, pady=12, cursor='hand2')
+        continue_button.pack(side=tk.LEFT, padx=(0, 10))
+        
+        github_button = tk.Button(button_frame, text="Go to GitHub", 
+                                 command=lambda: [webbrowser.open(self.repo_url), warning_window.destroy()],
+                                 font=('Segoe UI', 12, 'bold'),
+                                 fg='white', bg='#007bff', relief=tk.FLAT, bd=0,
+                                 padx=20, pady=12, cursor='hand2')
+        github_button.pack(side=tk.RIGHT)
+    
+    def show_must_update_dialog(self, latest_version):
+        """Show must update dialog (cannot continue)"""
+        must_update_window = tk.Toplevel(self.root)
+        must_update_window.title("Update Required")
+        must_update_window.geometry("600x500")
+        must_update_window.resizable(False, False)
+        must_update_window.configure(bg='#1c2026')
+        must_update_window.grab_set()
+        
+        # Center the dialog
+        must_update_window.transient(self.root)
+        must_update_window.geometry("+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50))
+        
+        # Content
+        content_frame = tk.Frame(must_update_window, bg='#1c2026')
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
+        
+        # Title
+        title_label = tk.Label(content_frame, text="Update Required", 
+                              font=('Segoe UI', 20, 'bold'), 
+                              fg='#ff4444', bg='#1c2026')
+        title_label.pack(pady=(0, 25))
+        
+        # Message
+        message_text = f"""This version is no longer supported and cannot be used.
+
+Current version: {self.VERSION}
+Latest version: {latest_version}
+
+You cannot use this version of the application. Please visit GitHub to download a supported version (Python or Java)."""
+        
+        # Create a text widget for better text wrapping
+        text_widget = tk.Text(content_frame, 
+                             font=('Segoe UI', 12), 
+                             fg='#b0b0b0', bg='#1c2026',
+                             wrap=tk.WORD, 
+                             height=8, 
+                             width=60,
+                             relief=tk.FLAT, 
+                             bd=0,
+                             padx=10, 
+                             pady=10)
+        text_widget.pack(pady=(0, 25), fill=tk.BOTH, expand=True)
+        text_widget.insert(tk.END, message_text)
+        text_widget.config(state=tk.DISABLED)  # Make it read-only
+        
+        # Buttons
+        button_frame = tk.Frame(content_frame, bg='#1c2026')
+        button_frame.pack(fill=tk.X, pady=(10, 0))
+        
+        github_button = tk.Button(button_frame, text="Visit GitHub", 
+                                 command=lambda: [webbrowser.open(self.repo_url), must_update_window.destroy()],
+                                 font=('Segoe UI', 12, 'bold'),
+                                 fg='white', bg='#007bff', relief=tk.FLAT, bd=0,
+                                 padx=25, pady=12, cursor='hand2')
+        github_button.pack(side=tk.LEFT, padx=(0, 15))
+        
+        exit_button = tk.Button(button_frame, text="Exit", 
+                               command=self.root.quit,
+                               font=('Segoe UI', 12, 'bold'),
+                               fg='white', bg='#dc3545', relief=tk.FLAT, bd=0,
+                               padx=25, pady=12, cursor='hand2')
+        exit_button.pack(side=tk.RIGHT)
+    
     def download_update(self, latest_version, parent_window):
         """Download the latest update"""
         try:
-            url = f"https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/code/V{latest_version}/RedMPanning.py"
+            # Construct URL for the new version
+            url = f"{self.PYTHON_SRC_URL}V{latest_version}/RedMPanning.py"
+            print(f"Downloading from: {url}")
+            
+            # Download the new version
             urllib.request.urlretrieve(url, "RedMPanning_new.py")
             
-            messagebox.showinfo("Update Complete", 
-                              "Update downloaded successfully!\nPlease restart the application.")
-            parent_window.destroy()
-            self.root.quit()
+            # Show progress dialog
+            self.show_update_progress(latest_version, parent_window)
+            
         except Exception as e:
+            print(f"Download error: {e}")
             messagebox.showerror("Update Failed", f"Error downloading update: {e}")
+    
+    def show_update_progress(self, latest_version, parent_window):
+        """Show update progress and perform the update"""
+        progress_window = tk.Toplevel(self.root)
+        progress_window.title("Updating Application")
+        progress_window.geometry("500x300")
+        progress_window.resizable(False, False)
+        progress_window.configure(bg='#1c2026')
+        progress_window.grab_set()
+        
+        # Center the dialog
+        progress_window.transient(self.root)
+        progress_window.geometry("+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50))
+        
+        # Content
+        content_frame = tk.Frame(progress_window, bg='#1c2026')
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
+        
+        # Title
+        title_label = tk.Label(content_frame, text="Updating Application", 
+                              font=('Segoe UI', 16, 'bold'), 
+                              fg='#28a745', bg='#1c2026')
+        title_label.pack(pady=(0, 20))
+        
+        # Status label
+        status_label = tk.Label(content_frame, text="Preparing update...", 
+                              font=('Segoe UI', 12), 
+                              fg='#b0b0b0', bg='#1c2026')
+        status_label.pack(pady=(0, 20))
+        
+        # Progress bar
+        progress_bar = ttk.Progressbar(content_frame, mode='indeterminate')
+        progress_bar.pack(fill=tk.X, pady=(0, 20))
+        progress_bar.start()
+        
+        def perform_update():
+            try:
+                # Update status
+                status_label.config(text="Installing update...")
+                progress_window.update()
+                
+                # Backup current file
+                if os.path.exists("RedMPanning.py"):
+                    os.rename("RedMPanning.py", "RedMPanning_backup.py")
+                
+                # Replace with new version
+                if os.path.exists("RedMPanning_new.py"):
+                    os.rename("RedMPanning_new.py", "RedMPanning.py")
+                
+                # Update status
+                status_label.config(text="Update complete! Restarting...")
+                progress_window.update()
+                
+                # Wait a moment then restart
+                time.sleep(2)
+                
+                # Close current application
+                parent_window.destroy()
+                progress_window.destroy()
+                self.root.quit()
+                
+                # Restart the application
+                import subprocess
+                subprocess.Popen([sys.executable, "RedMPanning.py"])
+                
+            except Exception as e:
+                print(f"Update error: {e}")
+                status_label.config(text=f"Update failed: {e}")
+                messagebox.showerror("Update Failed", f"Error during update: {e}")
+        
+        # Start update in background
+        threading.Thread(target=perform_update, daemon=True).start()
     
     def show_settings(self):
         """Show settings dialog"""
