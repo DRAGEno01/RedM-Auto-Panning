@@ -13,6 +13,8 @@ from pynput import keyboard
 from pynput.keyboard import Key, Listener
 from datetime import datetime
 import webbrowser
+import importlib.util
+import glob
 
 # psutil is no longer needed since game detection has been removed
 
@@ -30,8 +32,17 @@ class RedMPanning:
         self.start_hotkey = Key.f6
         self.stop_hotkey = Key.f7
         
+        # Theme system
+        self.current_theme = 'Default'
+        self.previous_theme = 'Default'  # Track previous theme for restart detection
+        self.available_themes = {}
+        self.theme_colors = {}
+        
         # Load settings
         self.load_settings()
+        
+        # Load available themes
+        self.load_themes()
         
         # Create main window
         self.root = tk.Tk()
@@ -45,6 +56,9 @@ class RedMPanning:
         
         # Create GUI
         self.create_gui()
+        
+        # Apply the loaded theme
+        self.apply_theme(self.current_theme)
         
         # Setup hotkey listener
         self.setup_hotkey_listener()
@@ -960,11 +974,14 @@ You cannot use this version of the application. Please visit GitHub to download 
                               fg='#a78bfa', bg='#2d2d2d')
         theme_label.pack(side=tk.LEFT)
         
-        # Create modern theme selection - Default theme only
+        # Create modern theme selection with available themes
         theme_var = tk.StringVar()
-        theme_var.set("Default")  # Always default to Default theme
+        theme_var.set(self.current_theme)  # Set current theme
         
-        theme_dropdown = tk.OptionMenu(theme_frame, theme_var, "Default")
+        # Get available theme names
+        theme_options = ['Default'] + list(self.available_themes.keys())
+        
+        theme_dropdown = tk.OptionMenu(theme_frame, theme_var, *theme_options)
         theme_dropdown.config(font=('Segoe UI', 11), bg='#404040', fg='white', 
                            activebackground='#525252', activeforeground='white',
                            relief=tk.FLAT, bd=0, padx=10, pady=5, width=8)
@@ -982,13 +999,30 @@ You cannot use this version of the application. Please visit GitHub to download 
             self.start_hotkey = getattr(Key, f'f{start_f_num}')
             self.stop_hotkey = getattr(Key, f'f{stop_f_num}')
             
-            # Always set theme to Default (no other options available)
-            self.current_theme = "Default"
+            # Update theme
+            selected_theme = theme_var.get()
             
+            # Check if theme changed BEFORE updating current_theme
+            theme_changed = selected_theme != self.current_theme
+            
+            # Update current theme
+            self.current_theme = selected_theme
+            
+            # Save settings to file first
             self.save_settings()
+            
             # Update the UI display with new hotkeys
             self.update_hotkey_display()
+            
+            # Close settings window
             settings_window.destroy()
+            
+            # Check if theme changed and restart if needed
+            if theme_changed:
+                print(f"[INFO] Theme changed from {self.previous_theme} to {selected_theme}")
+                self.restart_with_theme(selected_theme)
+            else:
+                print(f"[INFO] Theme unchanged ({selected_theme}), no restart needed")
         
         # Create compact dark buttons that fit properly
         save_button = tk.Button(button_container, text="💾 Save", 
@@ -997,6 +1031,13 @@ You cannot use this version of the application. Please visit GitHub to download 
                                fg='white', bg='#22c55e', relief=tk.FLAT, bd=0,
                                padx=15, pady=8, cursor='hand2')
         save_button.pack(side=tk.LEFT, padx=(0, 10))
+        
+        theme_folder_button = tk.Button(button_container, text="📁 Theme Folder", 
+                                       command=self.create_theme_folder,
+                                       font=('Segoe UI', 11, 'bold'),
+                                       fg='white', bg='#8b5cf6', relief=tk.FLAT, bd=0,
+                                       padx=15, pady=8, cursor='hand2')
+        theme_folder_button.pack(side=tk.LEFT, padx=(0, 10))
         
         cancel_button = tk.Button(button_container, text="❌ Cancel", 
                                  command=settings_window.destroy,
@@ -1013,9 +1054,296 @@ You cannot use this version of the application. Please visit GitHub to download 
         """Open Patreon donation page"""
         webbrowser.open("https://www.patreon.com/DRAGEno01")
     
+    def create_theme_folder(self):
+        """Create themes folder if it doesn't exist and open it"""
+        try:
+            script_dir = self.get_script_dir()
+            themes_folder = os.path.join(script_dir, "themes")
+            
+            if not os.path.exists(themes_folder):
+                os.makedirs(themes_folder)
+                print(f"[SUCCESS] Created themes folder at: {themes_folder}")
+            
+            # Open the themes folder in file explorer
+            import subprocess
+            import platform
+            
+            system = platform.system()
+            try:
+                if system == "Windows":
+                    subprocess.run(["explorer", themes_folder], check=False)
+                elif system == "Darwin":  # macOS
+                    subprocess.run(["open", themes_folder], check=False)
+                else:  # Linux and others
+                    subprocess.run(["xdg-open", themes_folder], check=False)
+                    
+                print(f"[SUCCESS] Opened themes folder: {themes_folder}")
+            except Exception as open_error:
+                print(f"[WARNING] Could not open file explorer: {open_error}")
+                # Don't show error dialog for file explorer issues
+                
+        except Exception as e:
+            print(f"[ERROR] Failed to create themes folder: {e}")
+            # Show error message to user only for folder creation failures
+            import tkinter.messagebox as msgbox
+            msgbox.showerror("Theme Folder Error", f"Failed to create themes folder:\n\n{str(e)}")
+    
     def get_script_dir(self):
         """Get the directory where the script is located"""
         return os.path.dirname(os.path.abspath(__file__))
+    
+    def load_themes(self):
+        """Load available themes from the themes folder"""
+        try:
+            themes_dir = os.path.join(self.get_script_dir(), "themes")
+            if not os.path.exists(themes_dir):
+                print("[INFO] Themes directory does not exist")
+                return
+            
+            # Find all .py files in themes directory
+            theme_files = glob.glob(os.path.join(themes_dir, "*.py"))
+            
+            for theme_file in theme_files:
+                try:
+                    # Extract theme name from filename
+                    theme_name = os.path.splitext(os.path.basename(theme_file))[0]
+                    
+                    # Load the theme module
+                    spec = importlib.util.spec_from_file_location(theme_name, theme_file)
+                    theme_module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(theme_module)
+                    
+                    # Get theme configuration
+                    if hasattr(theme_module, 'get_theme'):
+                        theme_config = theme_module.get_theme()
+                        self.available_themes[theme_name] = theme_config
+                        print(f"[SUCCESS] Loaded theme: {theme_name}")
+                    else:
+                        print(f"[WARNING] Theme {theme_name} does not have get_theme() function")
+                        
+                except Exception as e:
+                    print(f"[ERROR] Failed to load theme {theme_file}: {e}")
+            
+            print(f"[INFO] Loaded {len(self.available_themes)} themes")
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to load themes: {e}")
+    
+    def apply_theme(self, theme_name):
+        """Apply a theme to the application"""
+        try:
+            if theme_name == 'Default':
+                # Use default dark theme - matching exact UI colors
+                self.theme_colors = {
+                    'bg_primary': '#1a1a1a',        # Main background
+                    'bg_secondary': '#2d2d2d',      # Card backgrounds
+                    'bg_card': '#2d2d2d',           # Card backgrounds
+                    'bg_header': '#2d2d2d',         # Header background
+                    'bg_version': '#404040',        # Version badge background
+                    'text_primary': '#ffffff',      # Primary text
+                    'text_secondary': '#94a3b8',   # Secondary text
+                    'text_accent': '#a78bfa',       # Accent text (version)
+                    'text_success': '#4ade80',      # Success text
+                    'text_warning': '#fbbf24',      # Warning text
+                    'text_danger': '#ef4444',       # Danger text
+                    'btn_primary': '#22c55e',       # Start button
+                    'btn_success': '#22c55e',       # Success button
+                    'btn_danger': '#f87171',        # Stop button
+                    'btn_secondary': '#6b7280',     # GitHub/Settings buttons
+                    'btn_warning': '#f59e0b',       # Warning button
+                    'btn_info': '#e91e63',          # Donate button
+                    'status_ready': '#4ade80',      # Ready status
+                    'status_running': '#8b5cf6',    # Running status
+                    'status_stopped': '#ef4444',    # Stopped status
+                    'status_waiting': '#fbbf24',    # Waiting status
+                    'border_light': '#404040',      # Light border
+                    'border_medium': '#525252',     # Medium border
+                    'border_dark': '#6b7280',       # Dark border
+                    'accent_primary': '#8b5cf6',    # Primary accent
+                    'accent_secondary': '#6b7280',  # Secondary accent
+                    'highlight': '#2d2d2d',        # Highlight background
+                    'status_dot': '#4ade80',        # Status dot color
+                }
+            elif theme_name in self.available_themes:
+                self.theme_colors = self.available_themes[theme_name]
+            else:
+                print(f"[WARNING] Theme '{theme_name}' not found, using default")
+                self.apply_theme('Default')
+                return
+            
+            # Apply theme to current UI
+            self.apply_theme_to_ui()
+            print(f"[SUCCESS] Applied theme: {theme_name}")
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to apply theme {theme_name}: {e}")
+    
+    def apply_theme_to_ui(self):
+        """Apply current theme colors to the UI"""
+        try:
+            if not hasattr(self, 'root') or not self.theme_colors:
+                return
+            
+            # Apply to main window
+            self.root.configure(bg=self.theme_colors.get('bg_primary', '#1a1a1a'))
+            
+            # Apply to all widgets recursively
+            self.apply_theme_to_widget(self.root)
+            
+            # Force UI refresh to ensure changes are visible
+            self.root.update_idletasks()
+            self.root.update()
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to apply theme to UI: {e}")
+    
+    def apply_theme_to_widget(self, widget):
+        """Recursively apply theme to widget and its children"""
+        try:
+            # Apply theme based on widget type and configuration
+            if isinstance(widget, tk.Frame):
+                if hasattr(widget, 'cget'):
+                    try:
+                        current_bg = widget.cget('bg')
+                        # Map specific background colors to theme colors
+                        if current_bg == '#1a1a1a':
+                            widget.configure(bg=self.theme_colors.get('bg_primary', current_bg))
+                        elif current_bg == '#2d2d2d':
+                            widget.configure(bg=self.theme_colors.get('bg_secondary', current_bg))
+                        elif current_bg == '#404040':
+                            widget.configure(bg=self.theme_colors.get('bg_version', current_bg))
+                    except:
+                        pass
+            elif isinstance(widget, tk.Label):
+                if hasattr(widget, 'cget'):
+                    try:
+                        current_fg = widget.cget('fg')
+                        current_bg = widget.cget('bg')
+                        
+                        # Map text colors
+                        if current_fg == '#ffffff':
+                            widget.configure(fg=self.theme_colors.get('text_primary', current_fg))
+                        elif current_fg == '#94a3b8':
+                            widget.configure(fg=self.theme_colors.get('text_secondary', current_fg))
+                        elif current_fg == '#a78bfa':
+                            widget.configure(fg=self.theme_colors.get('text_accent', current_fg))
+                        elif current_fg == '#4ade80':
+                            widget.configure(fg=self.theme_colors.get('text_success', current_fg))
+                        elif current_fg == '#f87171':
+                            widget.configure(fg=self.theme_colors.get('text_danger', current_fg))
+                        elif current_fg == '#fbbf24':
+                            widget.configure(fg=self.theme_colors.get('text_warning', current_fg))
+                        
+                        # Map background colors for labels
+                        if current_bg == '#1a1a1a':
+                            widget.configure(bg=self.theme_colors.get('bg_primary', current_bg))
+                        elif current_bg == '#2d2d2d':
+                            widget.configure(bg=self.theme_colors.get('bg_secondary', current_bg))
+                        elif current_bg == '#404040':
+                            widget.configure(bg=self.theme_colors.get('bg_version', current_bg))
+                    except:
+                        pass
+            elif isinstance(widget, tk.Button):
+                if hasattr(widget, 'cget'):
+                    try:
+                        current_bg = widget.cget('bg')
+                        # Map button colors
+                        if current_bg == '#22c55e':
+                            widget.configure(bg=self.theme_colors.get('btn_success', current_bg))
+                        elif current_bg == '#f87171':
+                            widget.configure(bg=self.theme_colors.get('btn_danger', current_bg))
+                        elif current_bg == '#6b7280':
+                            widget.configure(bg=self.theme_colors.get('btn_secondary', current_bg))
+                        elif current_bg == '#8b5cf6':
+                            widget.configure(bg=self.theme_colors.get('accent_primary', current_bg))
+                        elif current_bg == '#e91e63':
+                            widget.configure(bg=self.theme_colors.get('btn_info', current_bg))
+                    except:
+                        pass
+            
+            # Apply to children
+            for child in widget.winfo_children():
+                self.apply_theme_to_widget(child)
+                
+        except Exception as e:
+            print(f"[ERROR] Failed to apply theme to widget: {e}")
+    
+    def refresh_ui_theme(self):
+        """Force a complete UI theme refresh"""
+        try:
+            # Apply theme to all widgets
+            self.apply_theme_to_ui()
+            
+            # Force multiple UI updates to ensure changes are visible
+            self.root.update_idletasks()
+            self.root.update()
+            
+            # Additional refresh for stubborn widgets
+            self.root.after(100, lambda: self.root.update_idletasks())
+            
+            print(f"[SUCCESS] UI theme refreshed for: {self.current_theme}")
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to refresh UI theme: {e}")
+    
+    def restart_with_theme(self, theme_name):
+        """Restart the application with the new theme"""
+        try:
+            print(f"[INFO] Restarting application with theme: {theme_name}")
+            
+            # Show restart message
+            self.show_restart_message(theme_name)
+            
+            # Get current script path
+            script_path = os.path.abspath(__file__)
+            
+            # Close current application
+            self.root.quit()
+            
+            # Start new instance with the same script
+            import subprocess
+            subprocess.Popen([sys.executable, script_path])
+            
+            # Exit current instance
+            sys.exit(0)
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to restart application: {e}")
+            # Fallback to regular theme application
+            self.apply_theme(theme_name)
+    
+    def show_restart_message(self, theme_name):
+        """Show a brief message about theme restart"""
+        try:
+            # Create a simple message window
+            restart_window = tk.Toplevel(self.root)
+            restart_window.title("Applying Theme")
+            restart_window.geometry("400x200")
+            restart_window.resizable(False, False)
+            restart_window.configure(bg='#1a1a1a')
+            restart_window.grab_set()
+            
+            # Center the message
+            restart_window.transient(self.root)
+            restart_window.geometry("+%d+%d" % (self.root.winfo_rootx() + 100, self.root.winfo_rooty() + 100))
+            
+            # Content
+            content_frame = tk.Frame(restart_window, bg='#1a1a1a')
+            content_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=30)
+            
+            # Message
+            message_label = tk.Label(content_frame, 
+                                   text=f"🎨 Applying {theme_name} theme...\n\nRestarting application...", 
+                                   font=('Segoe UI', 14, 'bold'), 
+                                   fg='#ffffff', bg='#1a1a1a',
+                                   justify=tk.CENTER)
+            message_label.pack(expand=True)
+            
+            # Auto-close after 2 seconds
+            restart_window.after(2000, restart_window.destroy)
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to show restart message: {e}")
     
     def load_settings(self):
         """Load settings from file"""
@@ -1028,8 +1356,12 @@ You cannot use this version of the application. Please visit GitHub to download 
                     stop_f = settings.get('stop_hotkey', 7)
                     self.start_hotkey = getattr(Key, f'f{start_f}')
                     self.stop_hotkey = getattr(Key, f'f{stop_f}')
-                    # Always use Default theme
-                    self.current_theme = 'Default'
+                    # Load theme from settings
+                    self.current_theme = settings.get('theme', 'Default')
+                    self.previous_theme = self.current_theme  # Set initial previous theme
+            else:
+                self.current_theme = 'Default'
+                self.previous_theme = 'Default'
         except Exception as e:
             print(f"Error loading settings: {e}")
             self.current_theme = 'Default'  # Default theme
@@ -1040,11 +1372,15 @@ You cannot use this version of the application. Please visit GitHub to download 
             settings = {
                 'start_hotkey': int(self.start_hotkey.value.vk - 111),
                 'stop_hotkey': int(self.stop_hotkey.value.vk - 111),
-                'theme': getattr(self, 'current_theme', 'Dark')
+                'theme': getattr(self, 'current_theme', 'Default')
             }
             settings_path = os.path.join(self.get_script_dir(), 'settings.json')
             with open(settings_path, 'w') as f:
                 json.dump(settings, f)
+            
+            # Update previous theme for next comparison
+            self.previous_theme = self.current_theme
+            
         except Exception as e:
             print(f"Error saving settings: {e}")
     
