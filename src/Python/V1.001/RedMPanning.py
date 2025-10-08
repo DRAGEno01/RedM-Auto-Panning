@@ -25,7 +25,7 @@ except ImportError:
 class RedMPanning:
     def __init__(self):
         self.VERSION = "1.001"
-        self.INFO_URL = "https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/src/Python/info.py"
+        self.INFO_URL = "https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/src/Python/info.txt"
         self.PYTHON_SRC_URL = "https://raw.githubusercontent.com/DRAGEno01/RedM-Auto-Panning/refs/heads/main/src/Python/"
         self.repo_url = "https://github.com/DRAGEno01/RedM-Auto-Panning/releases"
         
@@ -43,7 +43,7 @@ class RedMPanning:
         
         # Create main window
         self.root = tk.Tk()
-        self.root.title("DRAGEno02's RedM Auto Panning")
+        self.root.title("DRAGEno01's RedM Auto Panning")
         self.root.geometry("700x550")
         self.root.resizable(False, False)
         self.root.configure(bg='#1c2026')
@@ -65,6 +65,9 @@ class RedMPanning:
         
         # Check application integrity
         self.check_integrity()
+        
+        # Ensure requirements.txt exists
+        self.ensure_requirements_file()
         
         # Start fade-in animation
         self.fade_in_animation()
@@ -383,6 +386,19 @@ class RedMPanning:
                 self.root.after(0, self.show_tampering_warning)
         
         threading.Thread(target=integrity_check, daemon=True).start()
+    
+    def ensure_requirements_file(self):
+        """Create requirements.txt if it doesn't exist"""
+        try:
+            requirements_path = os.path.join(self.get_script_dir(), 'requirements.txt')
+            if not os.path.exists(requirements_path):
+                requirements_content = """pynput>=1.7.6
+psutil>=5.9.0"""
+                with open(requirements_path, 'w') as f:
+                    f.write(requirements_content)
+                print(f"Created requirements.txt at: {requirements_path}")
+        except Exception as e:
+            print(f"Error creating requirements.txt: {e}")
     
     def extract_author_from_url(self, url):
         """Extract author name from GitHub URL"""
@@ -722,8 +738,10 @@ You cannot use this version of the application. Please visit GitHub to download 
             url = f"{self.PYTHON_SRC_URL}V{latest_version}/RedMPanning.py"
             print(f"Downloading from: {url}")
             
-            # Download the new version
-            urllib.request.urlretrieve(url, "RedMPanning_new.py")
+            # Download to script directory
+            script_dir = self.get_script_dir()
+            new_file_path = os.path.join(script_dir, "RedMPanning_new.py")
+            urllib.request.urlretrieve(url, new_file_path)
             
             # Show progress dialog
             self.show_update_progress(latest_version, parent_window)
@@ -772,13 +790,18 @@ You cannot use this version of the application. Please visit GitHub to download 
                 status_label.config(text="Installing update...")
                 progress_window.update()
                 
+                script_dir = self.get_script_dir()
+                current_file = os.path.join(script_dir, "RedMPanning.py")
+                backup_file = os.path.join(script_dir, "RedMPanning_backup.py")
+                new_file = os.path.join(script_dir, "RedMPanning_new.py")
+                
                 # Backup current file
-                if os.path.exists("RedMPanning.py"):
-                    os.rename("RedMPanning.py", "RedMPanning_backup.py")
+                if os.path.exists(current_file):
+                    os.rename(current_file, backup_file)
                 
                 # Replace with new version
-                if os.path.exists("RedMPanning_new.py"):
-                    os.rename("RedMPanning_new.py", "RedMPanning.py")
+                if os.path.exists(new_file):
+                    os.rename(new_file, current_file)
                 
                 # Update status
                 status_label.config(text="Update complete! Restarting...")
@@ -792,9 +815,9 @@ You cannot use this version of the application. Please visit GitHub to download 
                 progress_window.destroy()
                 self.root.quit()
                 
-                # Restart the application
+                # Restart the application from script directory
                 import subprocess
-                subprocess.Popen([sys.executable, "RedMPanning.py"])
+                subprocess.Popen([sys.executable, current_file])
                 
             except Exception as e:
                 print(f"Update error: {e}")
@@ -888,11 +911,16 @@ You cannot use this version of the application. Please visit GitHub to download 
         """Open GitHub repository"""
         webbrowser.open(self.repo_url)
     
+    def get_script_dir(self):
+        """Get the directory where the script is located"""
+        return os.path.dirname(os.path.abspath(__file__))
+    
     def load_settings(self):
         """Load settings from file"""
         try:
-            if os.path.exists('settings.json'):
-                with open('settings.json', 'r') as f:
+            settings_path = os.path.join(self.get_script_dir(), 'settings.json')
+            if os.path.exists(settings_path):
+                with open(settings_path, 'r') as f:
                     settings = json.load(f)
                     start_f = settings.get('start_hotkey', 6)
                     stop_f = settings.get('stop_hotkey', 7)
@@ -908,7 +936,8 @@ You cannot use this version of the application. Please visit GitHub to download 
                 'start_hotkey': int(self.start_hotkey.value.vk - 111),
                 'stop_hotkey': int(self.stop_hotkey.value.vk - 111)
             }
-            with open('settings.json', 'w') as f:
+            settings_path = os.path.join(self.get_script_dir(), 'settings.json')
+            with open(settings_path, 'w') as f:
                 json.dump(settings, f)
         except Exception as e:
             print(f"Error saving settings: {e}")
