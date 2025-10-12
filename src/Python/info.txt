@@ -1,2 +1,2 @@
 supported = true
-version = 1.002
+version = 1.003
