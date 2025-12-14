@@ -57,7 +57,7 @@ For support, feel free to open a issue in the project. We will take a look into 
  - Tested by [Jamie Knotts]() [![](https://img.shields.io/badge/Tester-Missing_Profile-blue)]()
 ## Appendix
 
-This project is still being activly checked and developed. We are on version V1.003 for the Python version. Java version is no longer supported, nor will it work.
+This project is still being activly checked and developed. We are on version V1.004 for the Python version. Java version is no longer supported, nor will it work.
 
 Thank you very much for veiwing this project.
 
